@@ -11,7 +11,9 @@ class KMeans(object):
         self.clusters = [[] for c in self.centers]
         self.vectors = vectors
         self.metric = metric
+        self.init_similarity_function()
 
+    def init_similarity_function(self):
         if self.metric == 'euclidean':
             self.similarity_function = similarity.euclidean_similarity
         elif self.metric == 'jaccard':

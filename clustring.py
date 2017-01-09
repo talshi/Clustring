@@ -139,9 +139,9 @@ def kmeans_with_pca(vectors, metric='euclidean', k=29):
 
 
 def fcmeans(vectors, metric='euclidean', k=29):
-    fcm.FCmeans()
-    fcm.fuzzy_cmeans()
-    return fcm.get_centers(), fcm.get_U()
+    cl = fcm.FCmeans()
+    cl.fuzzy_cmeans()
+    return cl.get_centers(), cl.get_U()
 
 
 def fcmeans_with_pca(vectors, metric='euclidean', k=29):
@@ -150,9 +150,9 @@ def fcmeans_with_pca(vectors, metric='euclidean', k=29):
     downsampled_data = manual_pca(input_mat=vectors, num_of_reduced_features=2)
     print '####################################################################\n'
 
-    fcm.FCmeans()
-    fcm.fuzzy_cmeans()
-    return fcm.get_centers(), fcm.get_U()
+    cl = fcm.FCmeans(vectors, metric, cluster_number=k)
+    cl.fuzzy_cmeans()
+    return cl.get_centers(), cl.get_U()
 
 
 if __name__ == '__main__':
@@ -184,22 +184,22 @@ if __name__ == '__main__':
     # downsampled_data = manual_pca(input_mat=features, num_of_reduced_features=2)
     # print '####################################################################\n'
 
-    print '####################################################################'
-    print 'performing kmeans...'
-    # clusters, centers = kmeans(features, metric='euclidean', k=10)
-    clusters, centers = kmeans_with_pca(features, metric='euclidean', k=10)
-    print len(clusters), 'clusters are:'
-    for cluster in clusters:
-        print cluster
-    print '\n', len(centers), 'centers are:'
-    for center in centers:
-        print center
-    print '####################################################################\n'
+    # print '####################################################################'
+    # print 'performing kmeans...'
+    # # clusters, centers = kmeans(features, metric='euclidean', k=10)
+    # clusters, centers = kmeans_with_pca(features, metric='euclidean', k=10)
+    # print len(clusters), 'clusters are:'
+    # for cluster in clusters:
+    #     print cluster
+    # print '\n', len(centers), 'centers are:'
+    # for center in centers:
+    #     print center
+    # print '####################################################################\n'
 
     print '####################################################################'
     print 'performing fuzzy c means...'
     # clusters, centers = fcmeans(features, metric='euclidean', k=10)
-    clusters, centers = kmeans_with_pca(features, metric='euclidean', k=10)
+    clusters, centers = fcmeans_with_pca(features, metric='euclidean', k=10)
     print len(clusters), 'clusters are:'
     for cluster in clusters:
         print cluster
