@@ -41,24 +41,6 @@ class FCmeans(object):
             U.append(current)
         return U
 
-    # def init_U(self):
-    #     U = []
-    #     for i in range(0, len(self.data)):
-    #         for j in range(0, self.cluster_number):
-    #             np.abs(self.data[i] - C[j]) / np.abs(self.data[i] - C[])
-
-    def normalize_U(self):
-        """
-        This de-fuzzifies the U, at the end of the clustering. It would assume that the point is a member of the cluster whoes membership is maximum.
-        """
-        for i in range(0, len(self.U)):
-            maximum = max(self.U[i])
-            for j in range(0, len(self.U[0])):
-                if self.U[i][j] != maximum:
-                    self.U[i][j] = 0
-                else:
-                    self.U[i][j] = 1
-
     def end_conditon(self):
         for i in range(0, len(self.U)):
             for j in range(0, len(self.U[0])):
@@ -72,7 +54,7 @@ class FCmeans(object):
             C = []
             for j in range(0, self.cluster_number):
                 current_cluster_center = []
-                for i in range(0, len(self.data[0])):  # this is the number of dimensions
+                for i in range(0, len(self.data[0])):
                     dummy_sum_num = 0.0
                     dummy_sum_dum = 0.0
                     for k in range(0, len(self.data)):
@@ -81,8 +63,6 @@ class FCmeans(object):
                     current_cluster_center.append(dummy_sum_num / dummy_sum_dum)
                 C.append(current_cluster_center)
 
-            # creating a distance vector, useful in calculating the U matrix.
-
             distance_matrix = []
             for i in range(0, len(self.data)):
                 current = []
@@ -90,7 +70,6 @@ class FCmeans(object):
                     current.append(self.similarity_function(self.data[i], C[j]))
                 distance_matrix.append(current)
 
-            # update U vector
             for j in range(0, self.cluster_number):
                 for i in range(0, len(self.data)):
                     dummy = 0.0
@@ -101,9 +80,6 @@ class FCmeans(object):
             if self.end_conditon():
                 print "clustering has finished."
                 break
-
-        # self.normalize_U()
-        # print "U normalized."
 
     def get_centers(self):
         return self.centers

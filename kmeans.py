@@ -24,9 +24,7 @@ class KMeans(object):
             self.similarity_function = similarity.euclidean_similarity
 
     def update_clusters(self):
-        """Determine which cluster center each `self.vector` is closest to."""
         def closest_center_index(vector):
-            """Get the index of the closest cluster center to `self.vector`."""
             similarity_to_vector = lambda center: self.similarity_function(center,vector)
             center = np.array(max(self.centers, key=similarity_to_vector))
             deltas = []
@@ -41,9 +39,10 @@ class KMeans(object):
             self.clusters[index].append(vector)
 
     def update_centers(self):
-        """Move `self.centers` to the centers of `self.clusters`.
-        Return True if centers moved, else False.
-        """
+
+        def average(sequence):
+            return sum(sequence) / len(sequence)
+
         new_centers = []
         for cluster in self.clusters:
             center = [average(ci) for ci in zip(*cluster)]
@@ -56,7 +55,6 @@ class KMeans(object):
         return True
 
     def main_loop(self):
-        """Perform k-means clustering."""
         self.update_clusters()
         while self.update_centers():
             self.update_clusters()
@@ -68,5 +66,3 @@ class KMeans(object):
         return self.centers
 
 
-def average(sequence):
-    return sum(sequence) / len(sequence)
