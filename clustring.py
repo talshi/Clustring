@@ -10,27 +10,20 @@ import collections, re
 from collections import Counter
 import math
 import kmeans as kms
+import fcmeans as fcm
 import nltk
 # from textblob import TextBlob as tb
 
 data_file = 'dataset.csv'
+features_amount = 20
+amount_of_data = 10
 
 
 def read_data():
     df = pd.read_csv(data_file)
-    df = df[['FullDescription']][:10]
+    df = df[['FullDescription']][:amount_of_data]
     tokens = get_tokens(df)
-
-    # remove stop words
-    for doc in tokens:
-        for token in doc:
-            if token in ENGLISH_STOP_WORDS:
-                doc.remove(token)
-
-    # data_list = []
-    # for doc in filtered_tokens:
-    #     for token in doc:
-    #         data_list.append(str(token))
+    tokens = remove_stop_words(tokens)
     return tokens
 
 
@@ -39,26 +32,37 @@ def get_tokens(df):
                        for doc in df.FullDescription]
 
 
-def tf(word, blob):
-    return blob.words.count(word) / len(blob.words)
+def remove_stop_words(tokens):
+    for doc in tokens:
+        for token in doc:
+            if token in ENGLISH_STOP_WORDS:
+                doc.remove(token)
+    return tokens
 
 
-def n_containing(word, bloblist):
-    return sum(1 for blob in bloblist if word in blob.words)
-
-
-def idf(word, bloblist):
-    return math.log(len(bloblist) / (1 + n_containing(word, bloblist)))
-
-
-def tfidf(word, blob, bloblist):
-    return tf(word, blob) * idf(word, bloblist)
+# def tf(word, blob):
+#     return blob.words.count(word) / len(blob.words)
+#
+#
+# def n_containing(word, bloblist):
+#     return sum(1 for blob in bloblist if word in blob.words)
+#
+#
+# def idf(word, bloblist):
+#     return math.log(len(bloblist) / (1 + n_containing(word, bloblist)))
+#
+#
+# def tfidf(word, blob, bloblist):
+#     return tf(word, blob) * idf(word, bloblist)
 
 
 def extract_features(data):
-    vectorizer = CountVectorizer(max_features=200)
+    vectorizer = CountVectorizer(max_features=features_amount)
 
-    features_mat = vectorizer.fit_transform(data)
+    features_mat = []
+    for doc in data:
+        features_per_doc = vectorizer.fit_transform(np.array(doc))
+        features_mat.append(features_per_doc)
     features_name =  vectorizer.get_feature_names()
 
     return features_mat, features_name
@@ -74,7 +78,7 @@ def extract_features_manual(data):
     # print data_split
     # bag_of_words =  [txt for txt in data_split]
     bag_of_words = [collections.Counter(re.findall(r'\w+', doc)) for doc in data_split]
-    bag_of_words = [doc.most_common(20) for doc in bag_of_words]
+    bag_of_words = [doc.most_common(features_amount) for doc in bag_of_words]
     features_names = bag_of_words
 
     features = []
@@ -102,13 +106,10 @@ def pca(data):
 
 def manual_pca(input_mat, num_of_reduced_features=2):
     cov = np.cov(input_mat)
-    # print cov
-
     evals, evecs = np.linalg.eigh(cov)
-    # print evals
-    # print evecs
 
     # should be equal
+    assert np.sum(evals) != np.sum(np.diag(cov))
     # print np.sum(evals)
     # print evals/np.sum(np.diag(cov))
 
@@ -117,7 +118,7 @@ def manual_pca(input_mat, num_of_reduced_features=2):
     evals = evals[idx]
     evecs = evecs[:, :num_of_reduced_features]
 
-    return np.array(np.dot(evecs.T, input_mat).T), evals, evecs
+    return np.array(np.dot(evecs.T, input_mat).T)
 
 
 def kmeans(vectors, metric='euclidean', k=29):
@@ -126,8 +127,32 @@ def kmeans(vectors, metric='euclidean', k=29):
     return km.get_clusers(), km.get_centers()
 
 
-def fkmeans():
-    pass
+def kmeans_with_pca(vectors, metric='euclidean', k=29):
+    print '####################################################################'
+    print 'performing pca...'
+    downsampled_data = manual_pca(input_mat=vectors, num_of_reduced_features=2)
+    print '####################################################################\n'
+
+    km = kms.KMeans(k, downsampled_data, metric)
+    km.main_loop()
+    return km.get_clusers(), km.get_centers()
+
+
+def fcmeans(vectors, metric='euclidean', k=29):
+    fcm.FCmeans()
+    fcm.fuzzy_cmeans()
+    return fcm.get_centers(), fcm.get_U()
+
+
+def fcmeans_with_pca(vectors, metric='euclidean', k=29):
+    print '####################################################################'
+    print 'performing pca...'
+    downsampled_data = manual_pca(input_mat=vectors, num_of_reduced_features=2)
+    print '####################################################################\n'
+
+    fcm.FCmeans()
+    fcm.fuzzy_cmeans()
+    return fcm.get_centers(), fcm.get_U()
 
 
 if __name__ == '__main__':
@@ -137,9 +162,12 @@ if __name__ == '__main__':
     # print data
     print '####################################################################\n'
 
+    # print '####################################################################'
+    # print 'fetching features...'
     # features, features_name = extract_features(data)
     # print features_name
     # print 'amount of features: ', len(features_name)
+    # print '####################################################################\n'
 
     print '####################################################################'
     print 'fetching features...'
@@ -151,14 +179,27 @@ if __name__ == '__main__':
     # vars_ = pca(features)
     # print vars_
 
-    print '####################################################################'
-    print 'performing pca...'
-    downsampled_data, evals, evecs = manual_pca(input_mat=features, num_of_reduced_features=2)
-    print '####################################################################\n'
+    # print '####################################################################'
+    # print 'performing pca...'
+    # downsampled_data = manual_pca(input_mat=features, num_of_reduced_features=2)
+    # print '####################################################################\n'
 
     print '####################################################################'
     print 'performing kmeans...'
-    clusters, centers = kmeans(downsampled_data, metric='euclidean', k=10)
+    # clusters, centers = kmeans(features, metric='euclidean', k=10)
+    clusters, centers = kmeans_with_pca(features, metric='euclidean', k=10)
+    print len(clusters), 'clusters are:'
+    for cluster in clusters:
+        print cluster
+    print '\n', len(centers), 'centers are:'
+    for center in centers:
+        print center
+    print '####################################################################\n'
+
+    print '####################################################################'
+    print 'performing fuzzy c means...'
+    # clusters, centers = fcmeans(features, metric='euclidean', k=10)
+    clusters, centers = kmeans_with_pca(features, metric='euclidean', k=10)
     print len(clusters), 'clusters are:'
     for cluster in clusters:
         print cluster
