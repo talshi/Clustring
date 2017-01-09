@@ -19,16 +19,20 @@ data_file = 'dataset.csv'
 def read_data():
     print 'read data...'
     df = pd.read_csv(data_file)
-    df = df[['FullDescription']][:2]
+    df = df[['FullDescription']][:10]
     tokens = get_tokens(df)
     # print tokens
     filtered_tokens = [token for token in tokens
                                 for w in token
                                     if not w in ENGLISH_STOP_WORDS]
-    # data_list = []
-    # for v in df.values:
-    #     data_list.append(str(v))
-    return filtered_tokens
+
+    # print filtered_tokens
+
+    data_list = []
+    for doc in filtered_tokens:
+        for token in doc:
+            data_list.append(str(token))
+    return data_list
 
 def get_tokens(df):
     return [nltk.word_tokenize(doc.lower().translate(None, string.punctuation))
@@ -64,8 +68,11 @@ def extract_features_manual(data):
     data_split = ' '.join([str(w) for doc in data
                                     for w in doc])
     # print data_split
-    bag_of_words =  [collections.Counter(re.findall(r'\w+', txt)).most_common(10) for txt in data_split]
-    return bag_of_words
+    # bag_of_words =  [txt for txt in data_split]
+    bag_of_words = collections.Counter(re.findall(r'\w+', data_split))
+    bag_of_words = bag_of_words.most_common(100)
+    bag_of_words = [w[1] for w in bag_of_words]
+    return np.array(bag_of_words)
 
 
 def pca(data):
@@ -80,7 +87,8 @@ def pca(data):
     return vars_
 
 def manual_pca(input_mat, num_of_reduced_features=2):
-    cov = np.cov(input_mat.toarray())
+    print input_mat
+    cov = np.cov(input_mat)
     print cov
 
     evals, evecs = np.linalg.eigh(cov)
@@ -104,6 +112,7 @@ def kmeans(vectors, k=3):
     km = kmeans(k, vectors)
     km.main_loop()
 
+
 def fkmeans():
     pass
 
@@ -112,17 +121,17 @@ if __name__ == '__main__':
     data = read_data()
     # print data
 
-    # features_mat, features_name = extract_features(data)
+    # features, features_name = extract_features(data)
     # print features_name
     # print 'amount of features: ', len(features_name)
 
     features = extract_features_manual(data)
-    # print features
+    print features
 
-    # vars_ = pca(features_mat.toarray())
+    # vars_ = pca(features)
     # print vars_
 
-    # vars_ = np.var(features_mat.toarray())
+    # vars_ = np.var(features.toarray())
     # print vars_
 
-    downsampled_data, evals, evecs = manual_pca(input_mat=features, num_of_reduced_features=2)
+    # downsampled_data, evals, evecs = manual_pca(input_mat=features, num_of_reduced_features=2)
